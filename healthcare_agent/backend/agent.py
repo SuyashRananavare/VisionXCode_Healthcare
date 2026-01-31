@@ -9,6 +9,7 @@ Author: AI Assistant
 Date: January 31, 2026
 """
 
+from .observer import format_react_reasoning
 
 def generate_recommendations(patient: dict, resource_state: dict) -> list[dict]:
     """
@@ -191,3 +192,4 @@ def generate_recommendations(patient: dict, resource_state: dict) -> list[dict]:
         recommendations = recommendations[:3]  # Ensure max 3
 
     return recommendations
+

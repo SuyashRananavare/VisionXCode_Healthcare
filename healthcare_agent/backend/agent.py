@@ -15,6 +15,8 @@ from .documentation import get_action_documentation
 
 from .explanation import explain_action_decision
 
+from .who_athena import fetch_athena_data, query_athena_for_rag
+
 def generate_recommendations(patient: dict, resource_state: dict) -> list[dict]:
     """
     Generate 1-3 ranked clinical recommendations for a patient.
@@ -196,6 +198,7 @@ def generate_recommendations(patient: dict, resource_state: dict) -> list[dict]:
         recommendations = recommendations[:3]  # Ensure max 3
 
     return recommendations
+
 
 
 

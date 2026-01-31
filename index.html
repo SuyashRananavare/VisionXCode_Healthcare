@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Management AI Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="logo-icon">H+</div>
+                <div class="logo-text">
+                    <h1>HealthAI</h1>
+                    <p>Management System</p>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item active" data-view="dashboard">
+                <div class="nav-icon"></div>
+                <span>Resource Monitoring</span>
+            </div>
+            <div class="nav-item" data-view="patients-list">
+                <div class="nav-icon"></div>
+                <span>Patients List</span>
+            </div>
+            <div class="nav-item" data-view="patient-detail">
+                <div class="nav-icon"></div>
+                <span>Patient Details</span>
+            </div>
+            <div class="nav-item" data-view="bed-availability">
+                <div class="nav-icon"></div>
+                <span>Bed Availability</span>
+            </div>
+        </nav>
+    </div>
+
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" placeholder="Search patients...">
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-time">
+                <span>🕐</span>
+                <span id="current-time">--:--:--</span>
+            </div>
+            <div class="notification-badge">
+                <span>🔔</span>
+                <span class="badge-count" id="notification-count">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="view active" id="dashboard">
+            <div class="page-header">
+                <h1 class="page-title">Resource Monitoring</h1>
+            </div>
+            
+            <!-- Top Metrics -->
+            <div class="dashboard-grid">
+                <div class="metric-card">
+                    <div class="metric-icon primary"></div>
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Total Patients</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon emergency"></div>
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Emergency Cases</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon warning"></div>
+                    <div class="metric-value">0%</div>
+                    <div class="metric-label">ICU Capacity</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon success"></div>
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">AI Actions Today</div>
+                </div>
+            </div>
+
+            <!-- Resource Cards -->
+            <div class="resource-cards">
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-title">ICU Beds</div>
+                        <div class="resource-status status-warning">Warning</div>
+                    </div>
+                    <div class="resource-stats">
+                        <div class="resource-stat"></div>
+                        <div class="resource-detail"></div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-warning" style="width: 78%"></div>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-title">General Ward</div>
+                        <div class="resource-status status-normal">Normal</div>
+                    </div>
+                    <div class="resource-stats">
+                        <div class="resource-stat"></div>
+                        <div class="resource-detail"></div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-normal" style="width: 62%"></div>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-title">Nursing Staff</div>
+                        <div class="resource-status status-normal">Normal</div>
+                    </div>
+                    <div class="resource-stats">
+                        <div class="resource-stat"></div>
+                        <div class="resource-detail"></div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-normal" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-title">Specialists</div>
+                        <div class="resource-status status-critical">Critical</div>
+                    </div>
+                    <div class="resource-stats">
+                        <div class="resource-stat"></div>
+                        <div class="resource-detail"></div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-critical" style="width: 75%"></div>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-title">Ventilators</div>
+                        <div class="resource-status status-normal">Normal</div>
+                    </div>
+                    <div class="resource-stats">
+                        <div class="resource-stat"></div>
+                        <div class="resource-detail"></div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-normal" style="width: 33%"></div>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-title">Emergency Supplies</div>
+                        <div class="resource-status status-normal">Normal</div>
+                    </div>
+                    <div class="resource-stats">
+                        <div class="resource-stat"></div>
+                        <div class="resource-detail"></div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-normal" style="width: 87%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="view" id="patients-list">
+            <div class="page-header">
+                <h1 class="page-title">Patients List</h1>
+            </div>
+            
+            <div class="patients-header">
+                <button class="btn btn-primary" onclick="addPatient()">
+                    <span>+</span>
+                    <span>Add Patients</span>
+                </button>
+                <div class="patients-filters">
+                    <select class="status-dropdown" id="status-filter" onchange="filterPatients()">
+                        <option value="all">Status: All</option>
+                        <option value="emergency">Emergency</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="delayed">Delayed</option>
+                        <option value="non-urgent">Non-urgent</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>GENDER</th>
+                            <th>AGE</th>
+                            <th>DIAGNOSIS</th>
+                            <th>PHONE NUMBER</th>
+                            <th>ADDRESS</th>
+                            <th>BLOOD</th>
+                            <th>TRIAGE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patients-tbody">
+                        <!-- Patients will be added here dynamically -->
+                    </tbody>
+                </table>
+                
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-state-icon">👥</div>
+                    <div class="empty-state-title">No patients found</div>
+                    <div class="empty-state-text">Add a patient to get started or adjust your filters</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="view" id="patient-detail">
+            <div class="detail-container">
+                <div class="detail-header">
+                    <div class="detail-patient-info">
+                        <div class="detail-left">
+                            <img src="https://i.pravatar.cc/150?img=1" class="detail-avatar">
+                            <div>
+                                <h2>Andrea Waelthon</h2>
+                                <div style="font-size: 14px; color: var(--text-secondary);">
+                                    ID: PT-001 • Age: 70 • Female • Blood: O+
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary">View History</button>
+                            <button class="btn btn-primary">Override AI</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Vital Signs Trends</h3>
+                        </div>
+                        <div class="chart-placeholder">
+                            <span>📈</span>
+                            <span>Heart Rate, Blood Pressure, Oxygen Saturation</span>
+                        </div>
+                    </div>
+
+                    <div class="ai-insight-card">
+                        <div class="ai-title-row">
+                            <h3 class="ai-insight-title">
+                                <span>🤖</span>
+                                AI Clinical Insight
+                            </h3>
+                            <span id="ai-notification-badge" class="ai-notification-badge">1</span>
+                        </div>
+
+                        <div class="ai-risk-row">
+                            <span>Risk Level:</span>
+                            <span id="ai-risk-badge" class="ai-risk-badge ai-risk-critical ai-risk-badge-pulse">CRITICAL</span>
+                            <span id="ai-risk-trend">↑</span>
+                        </div>
+                        <p id="ai-risk-change" style="font-size: 12px; color: var(--text-secondary); margin: 0 0 12px;">
+                            Risk increased in last 3 hours
+                        </p>
+
+                        <div style="font-size: 12px; color: var(--text-secondary); margin: 8px 0;">
+                            <span>AI Confidence:</span>
+                            <span id="ai-confidence-value" style="float: right;">82%</span>
+                        </div>
+                        <div class="ai-confidence-bar">
+                            <div id="ai-confidence-fill" class="ai-confidence-fill"></div>
+                        </div>
+
+                        <div style="font-size: 12px; color: var(--text-secondary); margin: 12px 0;">
+                            <div>ICU Occupancy: <span id="ai-icu-occupancy">72%</span></div>
+                            <div>Beds Available: <span id="ai-beds-available">4</span></div>
+                        </div>
+                        <p id="ai-resource-message" style="font-size: 12px; color: #b91c1c; margin: 8px 0;">
+                            Escalation urgency increased due to limited ICU availability.
+                        </p>
+
+                        <div style="font-size: 12px; color: var(--text-secondary); margin: 12px 0;">
+                            <div>Nurse workload: <span id="ai-workload-nurses" style="background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 999px; font-size: 11px;">High</span></div>
+                            <div>Specialist availability: <span id="ai-workload-specialists" style="background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 999px; font-size: 11px;">Limited</span></div>
+                        </div>
+
+                        <div class="ai-decision-buttons">
+                            <button class="ai-btn ai-btn-primary" onclick="logDecision('ICU escalation')">Escalate to ICU</button>
+                            <button class="ai-btn ai-btn-secondary" onclick="logDecision('Step-down monitoring')">Step-Down Monitoring</button>
+                            <button class="ai-btn ai-btn-ghost" onclick="logDecision('Continue observation')">Continue Observation</button>
+                        </div>
+
+                        <button onclick="toggleAiExplanation()" style="background: none; border: none; color: var(--primary); text-decoration: underline; font-size: 12px; cursor: pointer;">
+                            Why this decision?
+                        </button>
+
+                        <div id="ai-explanation" class="ai-explanation hidden">
+                            <h4>Explanation</h4>
+                            <p>The model detected rapidly increasing heart rate, low blood pressure, and rising lactate levels. Historical outcomes show higher ICU transfer rate within 6 hours.</p>
+                            <p>Confidence based on 50,000+ prior cases with similar vital-sign patterns.</p>
+                        </div>
+
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Recent activity</div>
+                            <ul id="ai-log-list" style="font-size: 11px; color: var(--text-secondary); list-style: none; padding: 0;">
+                                <li>14:10 Risk increased</li>
+                                <li>14:20 ICU occupancy rose</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="view" id="bed-availability">
+            <div class="page-header">
+                <h1 class="page-title">Bed Availability</h1>
+                <p class="page-description">Monitor the current bed availability across all departments.</p>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="dashboard-grid">
+                <div class="metric-card">
+                    <div class="metric-icon success"></div>
+                    <div class="metric-value" id="total-beds">0</div>
+                    <div class="metric-label">Total Beds</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon warning"></div>
+                    <div class="metric-value" id="occupied-beds">0</div>
+                    <div class="metric-label">Occupied Beds</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon primary"></div>
+                    <div class="metric-value" id="available-beds">0</div>
+                    <div class="metric-label">Available Beds</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon emergency"></div>
+                    <div class="metric-value" id="bed-usage">0%</div>
+                    <div class="metric-label">Bed Usage</div>
+                </div>
+            </div>
+
+            <!-- Bed Availability Table -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Room</th>
+                            <th>Department</th>
+                            <th>Total Beds</th>
+                            <th>Occupied Beds</th>
+                            <th>Availability</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bed-availability-tbody">
+                        <!-- Rows will be dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

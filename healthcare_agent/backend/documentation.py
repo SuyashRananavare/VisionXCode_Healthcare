@@ -5,8 +5,6 @@ This module provides authoritative documentation and references supporting
 clinical actions recommended by the healthcare agent. All documentation
 is based on established medical guidelines and best practices.
 
-Author: AI Assistant
-Date: January 31, 2026
 """
 
 ACTION_DOCUMENTATION = {
@@ -130,3 +128,4 @@ def get_action_documentation(action: str) -> str:
              Returns empty string if action not found.
     """
     return ACTION_DOCUMENTATION.get(action, "")
+

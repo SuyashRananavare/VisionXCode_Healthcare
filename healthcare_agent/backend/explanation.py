@@ -5,8 +5,6 @@ This module provides clear, professional explanations for clinical action decisi
 focusing on patient risk factors and system constraints without suggesting alternatives
 or modifying the final decision.
 
-Author: AI Assistant
-Date: January 31, 2026
 """
 
 
@@ -89,5 +87,6 @@ def explain_action_decision(action: dict, evidence_snippets: list[str]) -> str:
         para3 = "Clinical evidence supports this decision through established protocols and best practices. "
         para3 += "The chosen action follows guidelines designed to optimize patient outcomes in similar situations."
         explanation.append(para3)
+
 
     return "\n\n".join(explanation)

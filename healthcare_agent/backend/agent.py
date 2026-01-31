@@ -13,6 +13,8 @@ from .observer import format_react_reasoning
 
 from .documentation import get_action_documentation
 
+from .explanation import explain_action_decision
+
 def generate_recommendations(patient: dict, resource_state: dict) -> list[dict]:
     """
     Generate 1-3 ranked clinical recommendations for a patient.
@@ -194,5 +196,6 @@ def generate_recommendations(patient: dict, resource_state: dict) -> list[dict]:
         recommendations = recommendations[:3]  # Ensure max 3
 
     return recommendations
+
 
 

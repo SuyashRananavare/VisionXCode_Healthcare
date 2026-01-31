@@ -854,3 +854,47 @@ td {
     background: var(--triage-past-away);
     color: var(--triage-past-away-text);
 }
+
+/* AI Agent Alerts Styles */
+.alert-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.alert-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px var(--shadow);
+    transition: all 0.2s;
+}
+
+.alert-card:hover {
+    box-shadow: 0 4px 8px var(--shadow);
+}
+
+.alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.alert-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.alert-time {
+    font-size: 14px;
+    color: var(--text-tertiary);
+}
+
+.alert-message {
+    font-size: 16px;
+    color: var(--text-secondary);
+}

@@ -201,66 +201,49 @@ function updateTime() {
     }, 6000);
 })();
 
-// Bed Availability Data
-const bedData = [
-    { room: 'ICU-101', department: 'ICU', totalBeds: 5, occupiedBeds: 3 },
-    { room: 'GEN-201', department: 'General', totalBeds: 10, occupiedBeds: 7 },
-    { room: 'MAT-301', department: 'Maternity', totalBeds: 8, occupiedBeds: 8 },
-    { room: 'EMR-401', department: 'Emergency', totalBeds: 6, occupiedBeds: 2 },
-];
+// AI Agent Alerts
+function loadAlerts() {
+    const alerts = [
+        {
+            type: 'Critical Alert',
+            time: '2 mins ago',
+            message: 'ICU capacity is at 92%. Immediate action required.'
+        },
+        {
+            type: 'High Alert',
+            time: '10 mins ago',
+            message: 'Patient John Doe requires urgent specialist attention.'
+        },
+        {
+            type: 'Moderate Alert',
+            time: '30 mins ago',
+            message: 'General ward occupancy is at 80%.'
+        }
+    ];
 
-function updateBedAvailability() {
-    const tbody = document.getElementById('bed-availability-tbody');
-    tbody.innerHTML = '';
-
-    let totalBeds = 0;
-    let totalOccupied = 0;
-
-    bedData.forEach(({ room, department, totalBeds: beds, occupiedBeds }) => {
-        const availableBeds = beds - occupiedBeds;
-        const availabilityBadge = availableBeds === 0
-            ? '<span class="triage-badge triage-emergency">Occupied</span>'
-            : availableBeds === beds
-            ? '<span class="triage-badge triage-non-urgent">Available</span>'
-            : '<span class="triage-badge triage-urgent">Partially Occupied</span>';
-
-        tbody.innerHTML += `
-            <tr>
-                <td>${room}</td>
-                <td>${department}</td>
-                <td>${beds}</td>
-                <td>${occupiedBeds}</td>
-                <td>${availabilityBadge}</td>
-            </tr>
-        `;
-
-        totalBeds += beds;
-        totalOccupied += occupiedBeds;
-    });
-
-    const totalAvailable = totalBeds - totalOccupied;
-    const usagePercentage = Math.round((totalOccupied / totalBeds) * 100);
-
-    document.getElementById('total-beds').textContent = totalBeds;
-    document.getElementById('occupied-beds').textContent = totalOccupied;
-    document.getElementById('available-beds').textContent = totalAvailable;
-    document.getElementById('bed-usage').textContent = `${usagePercentage}%`;
+    const alertContainer = document.querySelector('.alert-container');
+    alertContainer.innerHTML = alerts.map(alert => `
+        <div class="alert-card">
+            <div class="alert-header">
+                <h2>${alert.type}</h2>
+                <span class="alert-time">${alert.time}</span>
+            </div>
+            <p class="alert-message">${alert.message}</p>
+        </div>
+    `).join('');
 }
-
-// Simulate real-time updates
-setInterval(() => {
-    const randomRoom = Math.floor(Math.random() * bedData.length);
-    const room = bedData[randomRoom];
-    if (room.occupiedBeds < room.totalBeds) {
-        room.occupiedBeds += Math.random() > 0.5 ? 1 : 0;
-    } else {
-        room.occupiedBeds -= Math.random() > 0.5 ? 1 : 0;
-    }
-    updateBedAvailability();
-}, 5000);
 
 // Initialize
 updateTime();
 setInterval(updateTime, 1000);
 renderPatients();
-updateBedAvailability();
+
+// Initialize alerts when the page loads
+if (document.getElementById('ai-agent-alert')) {
+    loadAlerts();
+}
+
+// Ensure AI Clinical Insights is only loaded on the Patient Details page
+if (document.getElementById('patient-detail')) {
+    // Initialize AI Clinical Insights functionality here
+}

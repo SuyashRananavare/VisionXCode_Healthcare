@@ -4,8 +4,6 @@ ReAct-Style Observer for Deterministic Agent
 This module provides a function to format deterministic reasoning traces
 in a clear, human-readable ReAct-style format: Thought → Observation → Conclusion.
 
-Author: AI Assistant
-Date: January 31, 2026
 """
 
 
@@ -33,3 +31,4 @@ def format_react_reasoning(reasoning_trace: str) -> str:
             # If not structured, wrap as Observation
             formatted.append(f"Observation: {step}")
     return "\n".join(formatted)
+

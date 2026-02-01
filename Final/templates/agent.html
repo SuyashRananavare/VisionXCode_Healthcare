@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Clinical Decision Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            height: calc(100vh - 4rem);
+        }
+
+        .panel {
+            background: var(--surface);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        h2:first-child {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            /* Fix width overlap */
+        }
+
+        input:focus {
+            outline: 2px solid var(--primary);
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .output-card {
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #fff;
+        }
+
+        .rec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .confidence-badge {
+            background: #eff6ff;
+            color: var(--primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .explanation,
+        .guideline {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .guideline {
+            background: #f1f5f9;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            border-left: 3px solid var(--secondary);
+            font-style: italic;
+        }
+
+        .risk-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            background: #fee2e2;
+            color: #991b1b;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Input Panel -->
+        <div class="panel">
+            <h1>Patient & Resource Data</h1>
+
+            <h2>Vital Signs (Input)</h2>
+            <div class="form-group">
+                <label>AVPU Score</label>
+                <select id="avpu">
+                    <option value="A">Alert (A)</option>
+                    <option value="V">Voice (V)</option>
+                    <option value="P">Pain (P)</option>
+                    <option value="U">Unresponsive (U)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Systolic BP (mmHg)</label>
+                <input type="number" id="sbp" value="120">
+            </div>
+            <div class="form-group">
+                <label>SpO2 (%)</label>
+                <input type="number" id="spo2" value="98">
+            </div>
+            <div class="form-group">
+                <label>Respiratory Rate (bpm)</label>
+                <input type="number" id="rr" value="18">
+            </div>
+            <div class="form-group">
+                <label>NEWS2 Score (Calculated/Override)</label>
+                <input type="number" id="news2" value="2">
+            </div>
+
+            <h2>Hospital Resources</h2>
+            <div class="form-group">
+                <label>ICU Beds Available</label>
+                <input type="number" id="icu_beds" value="1">
+            </div>
+            <div class="form-group">
+                <label>Nurse Load (0.0 - 1.0+)</label>
+                <input type="number" step="0.1" id="nurse_load" value="0.7">
+            </div>
+            <div class="form-group">
+                <label>RRT Available?</label>
+                <select id="rrt">
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+
+            <button onclick="runAgent()">Run Agent Analysis</button>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="panel" id="output-panel">
+            <h1>Agent Diagnosis & Plan</h1>
+            <div id="loading" style="display:none; text-align:center; color: var(--secondary);">Running reasoning
+                engine...</div>
+
+            <div id="results" style="display:none;">
+                <div class="risk-indicator" id="risk-badge">
+                    Risk Level: ANALYZING...
+                </div>
+
+                <h2>Recommended Actions (Ranked)</h2>
+                <div id="recommendations-container"></div>
+            </div>
+
+            <div id="empty-results" style="text-align: center; color: var(--secondary); margin-top: 4rem;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🤖</div>
+                <p>Enter patient data and click 'Run Agent Analysis' to see AI recommendations.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function runAgent() {
+            // UI State
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('empty-results').style.display = 'none';
+
+            // Gather Data
+            const payload = {
+                vitals: {
+                    avpu: document.getElementById('avpu').value,
+                    sbp: parseInt(document.getElementById('sbp').value),
+                    spo2: parseInt(document.getElementById('spo2').value),
+                    rr: parseInt(document.getElementById('rr').value),
+                    news2: parseInt(document.getElementById('news2').value)
+                },
+                resources: {
+                    icu_beds_available: parseInt(document.getElementById('icu_beds').value),
+                    nurse_load: parseFloat(document.getElementById('nurse_load').value),
+                    rrt_available: document.getElementById('rrt').value === 'true'
+                }
+            };
+
+            try {
+                const res = await fetch('/api/agent/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                renderResults(data);
+            } catch (err) {
+                alert("Error running agent: " + err);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function renderResults(data) {
+            document.getElementById('results').style.display = 'block';
+            const recs = data.recommendations;
+            const container = document.getElementById('recommendations-container');
+            container.innerHTML = '';
+
+            // Render Recommendations
+            recs.forEach((rec, index) => {
+                const card = document.createElement('div');
+                card.className = 'output-card';
+                card.style.borderLeft = index === 0 ? '4px solid var(--primary)' : '1px solid var(--border)';
+
+                card.innerHTML = `
+                    <div class="rec-header">
+                        <span class="action-title">${index + 1}. ${rec.action}</span>
+                        <span class="confidence-badge">Confidence: ${Math.round(rec.confidence * 100)}%</span>
+                    </div>
+                    <div><strong>Why:</strong> <span class="explanation">${rec.explanation}</span></div>
+                    <div style="margin-top:0.5rem;"><strong>Protocol:</strong></div>
+                    <div class="guideline">${rec.documentation}</div>
+                    <div style="margin-top:0.5rem; font-size:0.8rem; color: var(--secondary);">
+                        Cost: ${rec.cost.level} | Benefit: ${rec.expected_benefit}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // Update Risk Badge implies logic from data (optional, using NEWS2 for now)
+            const news2 = parseInt(document.getElementById('news2').value);
+            const badge = document.getElementById('risk-badge');
+            if (news2 >= 7) {
+                badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
+                badge.textContent = `Risk Level: CRITICAL (NEWS2: ${news2})`;
+            } else if (news2 >= 5) {
+                badge.style.background = '#ffedd5'; badge.style.color = '#9a3412';
+                badge.textContent = `Risk Level: HIGH (NEWS2: ${news2})`;
+            } else {
+                badge.style.background = '#dcfce7'; badge.style.color = '#166534';
+                badge.textContent = `Risk Level: LOW/STABLE (NEWS2: ${news2})`;
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -51,6 +51,9 @@ class Recommendation:
     confidence: float
     emergent: bool
     rank: int = 0
+    intent: str = "escalate" # "monitor" or "escalate"
+    next_check_in_minutes: Optional[int] = None
+    memory_narrative: List[str] = field(default_factory=list)
     counterfactual_analysis: Optional[Dict[str, Any]] = field(default=None)
     
     def to_dict(self):
@@ -65,5 +68,8 @@ class Recommendation:
             "confidence": self.confidence,
             "emergent": self.emergent,
             "rank": self.rank,
+            "intent": self.intent,
+            "next_check_in_minutes": self.next_check_in_minutes,
+            "memory_narrative": self.memory_narrative,
             "counterfactual_analysis": self.counterfactual_analysis
         }

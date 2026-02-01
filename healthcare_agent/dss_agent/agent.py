@@ -2,7 +2,7 @@ from typing import List, Dict, Any
 from .models import Vitals, ResourceState, Recommendation
 from .world_model import WorldModel
 from .perception import vitals_trends, delay_signals, treatment_response, notes_signals
-from .reasoning import safety, scoring, tradeoffs, counterfactual
+from .reasoning import safety, scoring, tradeoffs, counterfactual, narrative
 
 class EscalationAgent:
     def __init__(self, patient_id: str):
@@ -61,10 +61,48 @@ class EscalationAgent:
         # Estimate risk from NEWS2 (0-20 scale mapped to 0-1)
         current_risk = min(1.0, belief_state.current_vitals.news2 / 20.0)
 
+        # Determine Intent
+        # Default to escalate if emergent or if top recommendation is high score/high cost
+        # Monitor if top recommendation is "Monitor closely" or scores are low
+        
+        primary_rec = top_recs[0]
+        intent = "escalate"
+        next_check_in = None
+        
+        # Threshold for escalation: standard score threshold or specific action types
+        # If the top action is "Monitor closely" or "Increase monitoring frequency"
+        # AND it's not emergent, we consider it a MONITORING intent.
+        
+        monitoring_actions = ["Monitor closely", "Increase monitoring frequency", "Discharge planning"]
+        
+        if not emergent_rec:
+            if primary_rec.action in monitoring_actions:
+                 intent = "monitor"
+                 # Set check-in time based on action
+                 if primary_rec.action == "Increase monitoring frequency":
+                     next_check_in = 30 # Check sooner
+                 else:
+                     next_check_in = 60 # Standard check
+            elif primary_rec.confidence < 0.5: # Low confidence in escalation
+                 # Force intent to monitor if confidence in escalation is low? 
+                 # Maybe safer to stick to recommendation but flag intent.
+                 pass
+
+        # Generate Memory Narrative
+        narrative_lines = narrative.generate_memory_narrative(belief_state.history, belief_state.current_vitals)
+
         for rec in top_recs:
+            # Propagate intent to all (or just primary? Usually intent is agent-level)
+            # But we persist it on the recommendation objects as requested.
+            rec.intent = intent
+            if intent == "monitor":
+                rec.next_check_in_minutes = next_check_in
+            
+            rec.memory_narrative = narrative_lines
+
             cf_result = counterfactual.analyze_counterfactual(
                 current_risk=current_risk,
-                delay_minutes=60,
+                delay_minutes=next_check_in if next_check_in else 60,
                 active_signals=explanation_signals
             )
             rec.counterfactual_analysis = cf_result

@@ -1,131 +1,150 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 from flask_cors import CORS
-from db import get_db_connection
-from agent import generate_recommendations
 
-app = Flask(__name__)
-CORS(app)  # allow UI to call backend
+from agent.agent import generate_recommendations
+from agent.documentation import get_action_documentation
+from agent.explanation import explain_action_decision
 
-# ---------------------------
-# HEALTH CHECK
-# ---------------------------
+
+from flask import render_template
+app = Flask(__name__, static_folder="static", static_url_path="/static")
+CORS(app)
+
+# Serve the main page
 @app.route("/")
-def health():
-    return {"status": "Backend running"}
+def home():
+    return render_template("index.html")
 
-# ---------------------------
-# GET ALL PATIENTS (UI TABLE)
-# ---------------------------
-@app.route("/api/patients", methods=["GET"])
-def get_patients():
-    conn = get_db_connection()
-    cur = conn.cursor()
+# --------------------------------------------------
+# HOSPITAL STATE
+# --------------------------------------------------
 
-    cur.execute("""
-        SELECT id, name, gender, age, diagnosis, phone, address, blood_group, triage
-        FROM patients
-    """)
+patients = [
+    {
+        "id": "P001",
+        "name": "Patient 1",
+        "AVPU": "A",
+        "SBP": 110,
+        "SpO2": 97,
+        "RR": 18,
+        "NEWS2": 2
+    },
+    {
+        "id": "P002",
+        "name": "Patient 2",
+        "AVPU": "V",
+        "SBP": 92,
+        "SpO2": 91,
+        "RR": 22,
+        "NEWS2": 6
+    },
+    {
+        "id": "P003",
+        "name": "Patient 3",
+        "AVPU": "A",
+        "SBP": 88,
+        "SpO2": 89,
+        "RR": 24,
+        "NEWS2": 7
+    },
+    {
+        "id": "P004",
+        "name": "Patient 4",
+        "AVPU": "A",
+        "SBP": 120,
+        "SpO2": 99,
+        "RR": 16,
+        "NEWS2": 1
+    },
+    {
+        "id": "P005",
+        "name": "Patient 5",
+        "AVPU": "P",
+        "SBP": 85,
+        "SpO2": 86,
+        "RR": 28,
+        "NEWS2": 9
+    }
+]
 
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
+staff_state = {
+    "nurses_total": 3,
+    "nurse_load": 0.75,   # 75% busy
+    "rrt_available": True
+}
 
-    patients = []
-    for r in rows:
-        patients.append({
-            "id": r[0],
-            "name": r[1],
-            "gender": r[2],
-            "age": r[3],
-            "diagnosis": r[4],
-            "phone": r[5],
-            "address": r[6],
-            "blood": r[7],
-            "triage": r[8],
-            "avatar": "https://i.pravatar.cc/150"
+bed_state = {
+    "icu_beds_available": 1,
+    "ward_beds_available": 3
+}
+
+# --------------------------------------------------
+# AGENT EXECUTION
+# --------------------------------------------------
+
+@app.route("/api/recommendations")
+def recommendations():
+    output = []
+
+    for patient in patients:
+        resource_state = {
+            "icu_beds_available": bed_state["icu_beds_available"],
+            "rrt_available": staff_state["rrt_available"],
+            "nurse_load": staff_state["nurse_load"],
+            "transport_delay": 20
+        }
+
+        recs = generate_recommendations(patient, resource_state)
+
+        enriched = []
+        for r in recs:
+            doc = get_action_documentation(r["action"])
+            explanation = explain_action_decision(r, [doc] if doc else [])
+
+            enriched.append({
+                **r,
+                "documentation": doc[:300] + "..." if doc else "",
+                "explanation": explanation
+            })
+
+        output.append({
+            "patient_id": patient["id"],
+            "name": patient["name"],
+            "patient_state": patient,
+            "recommendations": enriched
         })
 
-    return jsonify(patients)
+    return jsonify({
+        "hospital_state": {
+            "beds": bed_state,
+            "staff": staff_state
+        },
+        "patients": output
+    })
 
-# ---------------------------
-# GET PATIENT + AI DECISION
-# ---------------------------
-@app.route("/api/patients/<int:patient_id>/decision", methods=["GET"])
-def get_patient_decision(patient_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
 
-    # Fetch patient vitals
-    cur.execute("""
-        SELECT avpu, sbp, spo2, rr, news2
-        FROM patient_vitals
-        WHERE patient_id = %s
-        ORDER BY recorded_at DESC
-        LIMIT 1
-    """, (patient_id,))
+# --------------------------------------------------
+# SIMULATION: DETERIORATION + RESOURCE PRESSURE
+# --------------------------------------------------
 
-    patient_row = cur.fetchone()
+@app.route("/api/simulate")
+def simulate():
+    # Patient 2 deteriorates
+    patients[1]["SpO2"] = 85
+    patients[1]["NEWS2"] = 8
 
-    # Fetch hospital resources
-    cur.execute("""
-        SELECT icu_beds_available, rrt_available, nurse_load, transport_delay
-        FROM hospital_resources
-        ORDER BY updated_at DESC
-        LIMIT 1
-    """)
+    # Patient 5 becomes critical
+    patients[4]["SpO2"] = 82
+    patients[4]["NEWS2"] = 10
 
-    resource_row = cur.fetchone()
-    cur.close()
-    conn.close()
+    # ICU bed consumed
+    bed_state["icu_beds_available"] = 0
 
-    if not patient_row or not resource_row:
-        return jsonify({"error": "Missing data"}), 400
+    # Nurse overload
+    staff_state["nurse_load"] = 0.92
 
-    patient = {
-        "AVPU": patient_row[0],
-        "SBP": patient_row[1],
-        "SpO2": patient_row[2],
-        "RR": patient_row[3],
-        "NEWS2": patient_row[4],
-    }
+    return jsonify({"status": "hospital state updated"})
 
-    resource_state = {
-        "icu_beds_available": resource_row[0],
-        "rrt_available": resource_row[1],
-        "nurse_load": resource_row[2],
-        "transport_delay": resource_row[3],
-    }
 
-    recommendations = generate_recommendations(patient, resource_state)
-
-    return jsonify(recommendations)
-
-# ---------------------------
-# ADD PATIENT (OPTIONAL)
-# ---------------------------
-@app.route("/api/patients", methods=["POST"])
-def add_patient():
-    data = request.json
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        INSERT INTO patients (name, gender, age, diagnosis, phone, address, blood_group, triage)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-        RETURNING id
-    """, (
-        data["name"], data["gender"], data["age"], data["diagnosis"],
-        data["phone"], data["address"], data["blood"], data["triage"]
-    ))
-
-    patient_id = cur.fetchone()[0]
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return jsonify({"id": patient_id}), 201
-
-# ---------------------------
 if __name__ == "__main__":
     app.run(debug=True)

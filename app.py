@@ -1,150 +1,100 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
+import sys
+import os
 
-from agent.agent import generate_recommendations
-from agent.documentation import get_action_documentation
-from agent.explanation import explain_action_decision
+# Ensure system path includes current directory for module lookups
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# Backend Imports
+from healthcare_agent.dss_agent.agent import EscalationAgent
+from healthcare_agent.dss_agent.models import Vitals, ResourceState
+from healthcare_agent.dss_agent.explainability.athena_stub import fetch_athena_guidelines
+from healthcare_agent.dss_agent.explainability.llm_stub import generate_explanation
 
-from flask import render_template
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app)
 
-# Serve the main page
-@app.route("/")
-def home():
-    return render_template("index.html")
-
 # --------------------------------------------------
-# HOSPITAL STATE
+# UTILS
 # --------------------------------------------------
 
-patients = [
-    {
-        "id": "P001",
-        "name": "Patient 1",
-        "AVPU": "A",
-        "SBP": 110,
-        "SpO2": 97,
-        "RR": 18,
-        "NEWS2": 2
-    },
-    {
-        "id": "P002",
-        "name": "Patient 2",
-        "AVPU": "V",
-        "SBP": 92,
-        "SpO2": 91,
-        "RR": 22,
-        "NEWS2": 6
-    },
-    {
-        "id": "P003",
-        "name": "Patient 3",
-        "AVPU": "A",
-        "SBP": 88,
-        "SpO2": 89,
-        "RR": 24,
-        "NEWS2": 7
-    },
-    {
-        "id": "P004",
-        "name": "Patient 4",
-        "AVPU": "A",
-        "SBP": 120,
-        "SpO2": 99,
-        "RR": 16,
-        "NEWS2": 1
-    },
-    {
-        "id": "P005",
-        "name": "Patient 5",
-        "AVPU": "P",
-        "SBP": 85,
-        "SpO2": 86,
-        "RR": 28,
-        "NEWS2": 9
+def get_action_documentation(action_name):
+    return fetch_athena_guidelines(action_name)
+
+def explain_action_decision(recommendation, docs):
+    context = {
+        "recommendation": recommendation,
+        "docs": docs
     }
-]
-
-staff_state = {
-    "nurses_total": 3,
-    "nurse_load": 0.75,   # 75% busy
-    "rrt_available": True
-}
-
-bed_state = {
-    "icu_beds_available": 1,
-    "ward_beds_available": 3
-}
+    return generate_explanation(context)
 
 # --------------------------------------------------
-# AGENT EXECUTION
+# ROUTES
 # --------------------------------------------------
 
-@app.route("/api/recommendations")
-def recommendations():
-    output = []
+# Serve the "Integrated One" frontend - The Agent Interface
+@app.route("/")
+def agent_ui():
+    return render_template("agent.html")
 
-    for patient in patients:
-        resource_state = {
-            "icu_beds_available": bed_state["icu_beds_available"],
-            "rrt_available": staff_state["rrt_available"],
-            "nurse_load": staff_state["nurse_load"],
-            "transport_delay": 20
-        }
-
-        recs = generate_recommendations(patient, resource_state)
-
+@app.route("/api/agent/run", methods=["POST"])
+def run_agent_interactive():
+    try:
+        data = request.json
+        vitals_data = data.get("vitals", {})
+        resource_data = data.get("resources", {})
+        
+        # 1. Create Models
+        vitals = Vitals(
+            avpu=vitals_data.get("avpu", "A"),
+            sbp=int(vitals_data.get("sbp", 120)),
+            spo2=int(vitals_data.get("spo2", 98)),
+            rr=int(vitals_data.get("rr", 18)),
+            hr=80,  # Default
+            temp=37.0,
+            news2=int(vitals_data.get("news2", 0))
+        )
+        
+        r_state = ResourceState(
+            icu_beds_available=int(resource_data.get("icu_beds_available", 0)),
+            rrt_available=resource_data.get("rrt_available", True),
+            nurse_load=float(resource_data.get("nurse_load", 0.5)),
+            transport_delay_minutes=20
+        )
+        
+        # 2. Run Agent
+        # Use a temporary ID since this is stateless per request for the demo
+        temp_id = "SESSION_INTERACTIVE" 
+        agent = EscalationAgent(patient_id=temp_id)
+        
+        recs = agent.run_step(vitals, r_state)
+        
+        # 3. Enrich Recommendations with Docs & Explanations
         enriched = []
         for r in recs:
             doc = get_action_documentation(r["action"])
             explanation = explain_action_decision(r, [doc] if doc else [])
-
+            
             enriched.append({
                 **r,
-                "documentation": doc[:300] + "..." if doc else "",
+                "documentation": doc,
                 "explanation": explanation
             })
-
-        output.append({
-            "patient_id": patient["id"],
-            "name": patient["name"],
-            "patient_state": patient,
-            "recommendations": enriched
+            
+        return jsonify({
+            "status": "success",
+            "recommendations": enriched,
+            "patient_risk_score": vitals.news2
         })
-
-    return jsonify({
-        "hospital_state": {
-            "beds": bed_state,
-            "staff": staff_state
-        },
-        "patients": output
-    })
-
-
-# --------------------------------------------------
-# SIMULATION: DETERIORATION + RESOURCE PRESSURE
-# --------------------------------------------------
-
-@app.route("/api/simulate")
-def simulate():
-    # Patient 2 deteriorates
-    patients[1]["SpO2"] = 85
-    patients[1]["NEWS2"] = 8
-
-    # Patient 5 becomes critical
-    patients[4]["SpO2"] = 82
-    patients[4]["NEWS2"] = 10
-
-    # ICU bed consumed
-    bed_state["icu_beds_available"] = 0
-
-    # Nurse overload
-    staff_state["nurse_load"] = 0.92
-
-    return jsonify({"status": "hospital state updated"})
-
+        
+    except Exception as e:
+        print(f"Error running agent: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Ensure templates exist
+    if not os.path.exists("templates/agent.html"):
+        print("CRITICAL: templates/agent.html not found. Please ensure file exists.")
+    
+    app.run(host="127.0.0.1", port=5000, debug=True)
